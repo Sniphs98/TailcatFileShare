@@ -1,10 +1,13 @@
 import './style.css';
+import { Events } from '@wailsio/runtime';
 import {
   GetState, UIReady, CreateShare, StopShare, RemoveShare, OpenLink,
   AcceptTransfer, DeclineTransfer, CancelTransfer, DismissTransfer, ClearFinished,
   PickFiles, PickFolder, ChooseDownloadDir, Reveal, CopyText,
-} from '../wailsjs/go/main/App';
-import { EventsOn } from '../wailsjs/runtime/runtime';
+  HideWindow, Quit, GetAutostart, SetAutostart,
+} from '../bindings/github.com/Sniphs98/TailcatFileShare/app.js';
+
+const EventsOn = (name, cb) => Events.On(name, (ev) => cb(ev.data));
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -249,14 +252,24 @@ const seenAwaiting = new Set();
 
 let view = 'send';
 try { view = localStorage.getItem('view') || 'send'; } catch {}
+if (!['send', 'receive', 'activity'].includes(view)) view = 'send';
 
 function show(v) {
   view = v;
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.dataset.view === v));
-  document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === v));
-  try { localStorage.setItem('view', v); } catch {}
+  document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el.dataset.view === v));
+  $('#open-settings').classList.toggle('active', v === 'settings');
+  if (v === 'settings') GetAutostart().then((on) => { $('#autostart').checked = on; }).catch(() => {});
+  if (v !== 'settings') { try { localStorage.setItem('view', v); } catch {} }
 }
-document.querySelectorAll('.nav-item').forEach((el) => el.addEventListener('click', () => show(el.dataset.view)));
+document.querySelectorAll('.tab').forEach((el) => el.addEventListener('click', () => show(el.dataset.view)));
+$('#open-settings').addEventListener('click', () => show(view === 'settings' ? 'send' : 'settings'));
+$('#hide-window').addEventListener('click', () => HideWindow());
+$('#quit').addEventListener('click', () => Quit());
+$('#autostart').addEventListener('change', guard(async (ev) => {
+  await SetAutostart(ev.target.checked);
+  toast(ev.target.checked ? 'CatJump will start with your computer' : 'Autostart turned off');
+}));
 show(view);
 
 const badge = (name, n) => set(document, `[data-count=${name}]`, n ? String(n) : '');
@@ -276,7 +289,7 @@ function render(st) {
     sig: (s) => `${s.status}|${s.link}|${s.active > 0}`,
     build: buildShare,
     patch: patchShare,
-    empty: `<div class="empty"><strong>Nothing shared yet</strong>Drop files above to create a link.</div>`,
+    empty: `<div class="empty"><strong>Nothing shared yet</strong>Drop files above to get a link.</div>`,
   });
   reconcile($('#incoming'), st.transfers.filter((t) => t.direction === 'recv'), {
     ...transferList,
@@ -311,7 +324,9 @@ async function share(paths) {
   toast('Creating share. The link will appear in a moment');
 }
 
-$('#pick-files').addEventListener('click', guard(async () => share(await PickFiles())));
+const pickFiles = guard(async () => share(await PickFiles()));
+$('#pick-files').addEventListener('click', pickFiles);
+EventsOn('pick-files', () => { show('send'); pickFiles(); });
 $('#pick-folder').addEventListener('click', guard(async () => {
   const p = await PickFolder();
   if (p) await share([p]);

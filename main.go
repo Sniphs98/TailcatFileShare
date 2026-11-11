@@ -2,75 +2,67 @@ package main
 
 import (
 	"embed"
+	"log"
 	"os"
+	"slices"
 
 	"github.com/tailscale/tailcat"
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	"github.com/wailsapp/wails/v2/pkg/options/linux"
-	"github.com/wailsapp/wails/v2/pkg/options/mac"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed build/appicon.png
-var icon []byte
+// backgroundFlag starts CatJump in the tray without showing its window, as
+// used when it starts with the computer.
+const backgroundFlag = "--background"
 
 func main() {
 	tailcat.Verbose = false
-	app := NewApp()
-	app.handleLaunchArgs(os.Args[1:])
+	a := NewApp()
+	d := &desktop{}
+	a.desktop = d
 
-	err := wails.Run(&options.App{
-		Title:     "CatJump",
-		Width:     1080,
-		Height:    720,
-		MinWidth:  760,
-		MinHeight: 560,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
+	app := application.New(application.Options{
+		Name:        "CatJump",
+		Description: "Share files directly, powered by tailcat",
+		Services:    []application.Service{application.NewService(a)},
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
 		},
-		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 255},
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
-		DragAndDrop: &options.DragAndDrop{
-			EnableFileDrop:     true,
-			DisableWebViewDrop: true,
+		Mac: application.MacOptions{
+			// A menu bar app: no Dock icon, keeps running without windows.
+			ActivationPolicy: application.ActivationPolicyAccessory,
+			ApplicationShouldTerminateAfterLastWindowClosed: false,
 		},
-		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "dev.catjump.app.7f3c1e",
-			OnSecondInstanceLaunch: func(d options.SecondInstanceData) {
-				app.handleLaunchArgs(d.Args)
-				if app.ctx != nil {
-					runtime.WindowUnminimise(app.ctx)
-					runtime.WindowShow(app.ctx)
+		SingleInstance: &application.SingleInstanceOptions{
+			UniqueID: "dev.catjump.app",
+			OnSecondInstanceLaunch: func(data application.SecondInstanceData) {
+				// Launching CatJump again (or clicking a link / "Open with")
+				// brings up the running instance.
+				if !a.handleLaunchArgs(data.Args) {
+					a.showWindow()
 				}
 			},
 		},
-		Bind: []interface{}{app},
-		Mac: &mac.Options{
-			TitleBar: mac.TitleBarHiddenInset(),
-			About: &mac.AboutInfo{
-				Title:   "CatJump",
-				Message: "Share files directly and end-to-end encrypted, powered by tailcat.",
-				Icon:    icon,
-			},
-			OnUrlOpen: app.handleURL,
-		},
-		Linux: &linux.Options{
-			Icon:        icon,
-			ProgramName: "catjump",
-		},
 	})
-	if err != nil {
-		println("Error:", err.Error())
-	}
-}
+	d.app = app
 
-func bringToFront(a *App) {
-	runtime.WindowUnminimise(a.ctx)
-	runtime.WindowShow(a.ctx)
+	app.Event.OnApplicationEvent(events.Common.ApplicationLaunchedWithUrl, func(e *application.ApplicationEvent) {
+		a.handleURL(e.Context().URL())
+	})
+
+	d.setup()
+	launchedWithWork := a.handleLaunchArgs(os.Args[1:])
+
+	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		if !launchedWithWork && !slices.Contains(os.Args[1:], backgroundFlag) {
+			a.showWindow()
+		}
+	})
+
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
 }

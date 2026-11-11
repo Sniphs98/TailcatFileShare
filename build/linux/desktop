@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=CatJump
+Comment=Share files directly, powered by tailcat
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/catjump %u
+Terminal=false
+Type=Application
+Icon=catjump
+Categories=Utility;
+StartupWMClass=catjump
+
+MimeType=x-scheme-handler/catjump; 

@@ -6,7 +6,9 @@
 your own machines.** No account, no cloud, no upload limits. Everything is
 end-to-end encrypted with WireGuard.
 
-CatJump is a desktop app for Windows, macOS and Linux. It is built on
+CatJump is a small tray app for Windows, macOS and Linux: it lives in the
+system tray (the menu bar on macOS) and opens a compact window when you
+click its icon. It is built on
 [tailcat](https://github.com/tailscale/tailcat), which uses Tailscale's open
 source data plane (WireGuard, NAT traversal and DERP relays) without a
 Tailscale account or control plane.
@@ -14,18 +16,22 @@ Tailscale account or control plane.
 
 ## How it works
 
-1. **Share:** Drop files or folders onto the window. You can also click
-   **Choose files** or open them with CatJump from your file manager.
+1. **Share:** Click the cat in your tray and drop files or folders onto the
+   window. You can also click **Files**/**Folder**, pick **Share files…** from
+   the tray icon's menu, or open files with CatJump from your file manager.
    After a few seconds you get a link like `catjump://get/tcp…`.
 2. **Send the link** over any messenger or email.
 3. **Receive:** Your friend clicks the link and their CatJump app
-   opens (or they paste the link into the app). The app shows what's coming,
+   pops up from the tray (or they paste the link into the app). The app shows what's coming,
    and nothing is written until they click **Accept**.
 4. The files are saved to your download folder, which you can change under
    **Settings**. Existing files are never overwritten: a new file gets
    a name like `photo (2).jpg` instead.
 
-A link works as long as the share is running and the sender's app is open.
+A link works as long as the share is running and CatJump runs on the
+sender's computer. Closing the window (✕ or Esc) only hides it in the tray,
+so shares stay online; **Quit CatJump** in the tray menu or in Settings
+stops everything.
 With **One-time link** turned on, the share stops after the first complete
 download. You can stop any share at any time with ⏹.
 
@@ -39,9 +45,11 @@ download. You can stop any share at any time with ⏹.
 - A **⚡ Direct** or **Relay** badge that shows how the connection runs
 - One-time links
 - Multiple friends can download the same share at once
-- Minimal black-and-white UI with separate **Send**, **Receive**,
-  **Activity** and **Settings** pages; a clicked link jumps straight to
-  **Receive**
+- Lives in the system tray / menu bar with a compact 400 × 620 window, no
+  taskbar or Dock clutter
+- Optional start with your computer (Settings), quietly in the tray
+- Minimal black-and-white UI with **Send**, **Receive** and **Activity**
+  tabs; a clicked link jumps straight to **Receive**
 
 ### Connection
 
@@ -78,11 +86,15 @@ Builds for every platform come from the GitHub Actions workflow in
 |----------|----------|
 | Windows  | `catjump-amd64-installer.exe` (installer) or `catjump.exe` (portable) |
 | macOS    | `CatJump-macOS.zip` (universal `.app`) |
-| Linux    | `catjump` (needs GTK 3 and WebKitGTK 4.1) |
+| Linux    | `catjump` (needs GTK 4 and WebKitGTK 6.0) |
 
 The builds aren't code-signed. On Windows, SmartScreen shows a warning;
 click *More info → Run anyway*. On macOS, right-click the app and choose
 *Open* the first time.
+
+On Linux, the tray icon needs a desktop with StatusNotifier support (KDE,
+Cinnamon, XFCE; on GNOME the *AppIndicator* extension). Without it, launch
+CatJump again to bring the window back.
 
 ### Link registration
 
@@ -97,35 +109,40 @@ click *More info → Run anyway*. On macOS, right-click the app and choose
 You need:
 - Go 1.27.2 or newer
 - Node.js 22
-- [Wails v2](https://wails.io), installed with:
+- [Wails v3](https://v3.wails.io), installed with:
 
 ```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.1.0
 ```
 
-On Linux you also need `libgtk-3-dev` and `libwebkit2gtk-4.1-dev`:
+On Linux you also need GTK 4 and WebKitGTK 6.0:
 
 ```bash
-sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev
+sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev
 ```
 
 Run in dev mode with hot reload:
 
 ```bash
-wails dev -tags webkit2_41
+wails3 dev
 ```
 
-Build:
+Build for the current platform (output in `bin/`):
 
 ```bash
-wails build -tags webkit2_41
+wails3 build
 ```
 
-Leave out `-tags webkit2_41` on Windows and macOS. You can also build the
-Windows app and its installer from Linux (needs `nsis`):
+Package the Windows app and its installer, also from Linux (needs `nsis`):
 
 ```bash
-wails build -platform windows/amd64 -nsis
+wails3 task windows:package ARCH=amd64 INSTALL_SCOPE=user
+```
+
+Package a universal macOS app (on a Mac):
+
+```bash
+wails3 task darwin:package:universal
 ```
 
 ### Tests
@@ -135,7 +152,7 @@ folder over a real tailcat tunnel, using a local DERP relay so no internet
 is needed:
 
 ```bash
-go test -tags webkit2_41 ./...
+go test ./...
 ```
 
 ### Own relay / offline testing
@@ -149,7 +166,7 @@ go run ./tools/devderp
 ```
 
 ```bash
-CATJUMP_DERPMAP_URL=http://127.0.0.1:8475/derpmap.json ./build/bin/catjump
+CATJUMP_DERPMAP_URL=http://127.0.0.1:8475/derpmap.json ./bin/catjump
 ```
 
 Both the sender and the receiver need the same setting.
@@ -172,7 +189,8 @@ the arguments are forwarded to it.
 | `receive.go` | Receiving: tailcat client, accept/decline, safe writing |
 | `protocol.go` | Transfer protocol and path sanitizing |
 | `link.go` | `catjump://get/<tailcat address>` links |
-| `app.go` | State, progress/speed, settings, dialogs, OS integration |
+| `app.go` | State, progress/speed, settings, the methods the UI calls |
+| `desktop.go` | Tray icon and menu, the compact window, dialogs |
 | `register_*.go` | Per-OS registration of the link scheme |
 | `frontend/` | UI (vanilla JS + Vite) |
 | `tools/devderp/` | Local DERP relay for development |
@@ -194,7 +212,7 @@ receiver → sender     done       {"ok":true}
 - [tailcat](https://github.com/tailscale/tailcat) and
   [Tailscale](https://github.com/tailscale/tailscale) (BSD-3-Clause) for
   the networking
-- [Wails](https://wails.io) for the desktop shell
+- [Wails v3](https://v3.wails.io) for the desktop shell and tray
 - [Inter](https://rsms.me/inter/) typeface (SIL Open Font License)
 
 CatJump is an independent project and is not affiliated with or

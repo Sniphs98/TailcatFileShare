@@ -1,16 +1,19 @@
 {
-  "name": "frontend",
+  "name": "catjump-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build:dev": "vite build --minify false --mode development",
+    "build": "vite build --mode production",
     "preview": "vite preview"
   },
-  "devDependencies": {
-    "vite": "^7.0.0"
-  },
   "dependencies": {
-    "@fontsource-variable/inter": "^5.3.0"
+    "@fontsource-variable/inter": "^5.2.8",
+    "@wailsio/runtime": "3.1.0"
+  },
+  "devDependencies": {
+    "vite": "^8.2.4"
   }
 }

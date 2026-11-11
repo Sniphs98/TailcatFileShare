@@ -5,7 +5,7 @@ go 1.27.2
 require (
 	github.com/google/uuid v1.6.0
 	github.com/tailscale/tailcat v0.7.1-0.20261105151022-e00cdde6ff78
-	github.com/wailsapp/wails/v2 v2.17.1
+	github.com/wailsapp/wails/v3 v3.1.0
 	golang.org/x/sys v0.48.0
 	tailscale.com v1.105.0-pre.0.20261013225543-fb79793d99f5
 )
@@ -13,7 +13,6 @@ require (
 require (
 	9fans.net/go v0.0.8-0.20250307142834-96bdba94b63f // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
-	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
@@ -35,7 +34,6 @@ require (
 	github.com/aws/smithy-go v1.28.1 // indirect
 	github.com/axiomhq/hyperloglog v0.2.6 // indirect
 	github.com/benbjohnson/immutable v0.4.3 // indirect
-	github.com/bep/debounce v1.2.1 // indirect
 	github.com/bradfitz/reco v0.0.0-20260929154613-b883fbd17e3f // indirect
 	github.com/coder/websocket v1.8.15 // indirect
 	github.com/coreos/go-iptables v0.8.0 // indirect
@@ -45,8 +43,8 @@ require (
 	github.com/dgryski/go-metro v0.0.0-20250106013310-edb8663e5e33 // indirect
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e // indirect
 	github.com/djherbis/times v1.6.0 // indirect
+	github.com/ebitengine/purego v0.11.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.3 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/gaissmai/bart v0.29.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -58,26 +56,16 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/nftables v0.3.0 // indirect
-	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
 	github.com/illarion/gonotify/v3 v3.0.2 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20260901064844-234b97448fae // indirect
-	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e // indirect
 	github.com/jellydator/ttlcache/v3 v3.4.1 // indirect
 	github.com/jsimonetti/rtnetlink v1.4.2 // indirect
 	github.com/kamstrup/intmap v0.5.2 // indirect
 	github.com/klauspost/compress v1.20.0 // indirect
 	github.com/kortschak/wol v0.0.0-20200729010619-da482cc4850a // indirect
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/labstack/echo/v4 v4.16.1 // indirect
-	github.com/labstack/gommon v0.5.0 // indirect
-	github.com/leaanthony/go-ansi-parser v1.6.1 // indirect
-	github.com/leaanthony/gosod v1.0.4 // indirect
-	github.com/leaanthony/slicer v1.6.0 // indirect
-	github.com/leaanthony/u v1.1.1 // indirect
-	github.com/mattn/go-colorable v0.1.15 // indirect
-	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mdlayher/genetlink v1.4.0 // indirect
 	github.com/mdlayher/netlink v1.11.2 // indirect
 	github.com/mdlayher/sdnotify v1.0.0 // indirect
@@ -85,12 +73,8 @@ require (
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pires/go-proxyproto v0.15.0 // indirect
-	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/sftp v1.13.11 // indirect
-	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/safchain/ethtool v0.7.0 // indirect
-	github.com/samber/lo v1.49.1 // indirect
 	github.com/tailscale/certstore v0.1.1-0.20260409135935-3638fb84b77d // indirect
 	github.com/tailscale/gliderssh v0.3.4-0.20260716005906-1a0f895faf28 // indirect
 	github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55 // indirect
@@ -101,13 +85,9 @@ require (
 	github.com/tailscale/wf v0.0.0-20240214030419-6fbb0a674ee6 // indirect
 	github.com/tailscale/wireguard-go v0.0.0-20260928213353-e61b6b78110b // indirect
 	github.com/tailscale/xnet v0.0.0-20240729143630-8497ac4dab2e // indirect
-	github.com/tkrajina/go-reflector v0.5.8 // indirect
 	github.com/u-root/u-root v0.16.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
-	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go4.org/mem v0.0.0-20240501181205-ae6ca9944745 // indirect
 	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb // indirect

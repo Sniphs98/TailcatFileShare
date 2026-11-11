@@ -102,9 +102,7 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 		t.Files = files
 		t.Status = "awaiting"
 	})
-	if a.ctx != nil {
-		bringToFront(a)
-	}
+	a.showWindow()
 
 	var ok bool
 	select {

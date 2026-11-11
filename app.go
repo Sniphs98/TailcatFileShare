@@ -17,12 +17,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // App is bound to the frontend; its exported methods are callable from JS.
 type App struct {
-	ctx context.Context
+	// desktop is the window-system glue (nil in tests).
+	desktop *desktop
 
 	mu        sync.Mutex
 	shares    map[string]*share
@@ -108,16 +109,15 @@ func NewApp() *App {
 	return a
 }
 
-func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
+// ServiceStartup is called by Wails when the app starts.
+func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	go a.emitLoop()
-	runtime.OnFileDrop(ctx, func(x, y int, paths []string) {
-		runtime.EventsEmit(ctx, "files-dropped", paths)
-	})
 	go registerProtocol()
+	return nil
 }
 
-func (a *App) shutdown(ctx context.Context) {
+// ServiceShutdown is called by Wails when the app quits.
+func (a *App) ServiceShutdown() error {
 	a.mu.Lock()
 	shares := make([]*share, 0, len(a.shares))
 	for _, s := range a.shares {
@@ -136,6 +136,23 @@ func (a *App) shutdown(ctx context.Context) {
 	for _, s := range shares {
 		s.stop()
 	}
+	return nil
+}
+
+func (a *App) emit(name string, data any) {
+	if a.desktop != nil {
+		a.desktop.emit(name, data)
+	}
+}
+
+func (a *App) showWindow() {
+	if a.desktop != nil {
+		a.desktop.show()
+	}
+}
+
+func (a *App) toastError(err error) {
+	a.emit("toast", map[string]string{"kind": "error", "text": err.Error()})
 }
 
 // emitLoop pushes the state to the UI whenever something changed, at most
@@ -164,7 +181,7 @@ func (a *App) emitLoop() {
 		}
 		a.mu.Unlock()
 		if a.dirty.Swap(false) {
-			runtime.EventsEmit(a.ctx, "state", a.GetState())
+			a.emit("state", a.GetState())
 		}
 	}
 }
@@ -208,18 +225,25 @@ func (a *App) UIReady() {
 	if link != "" {
 		a.openLinkFromOS(link)
 	}
+	if len(shares) > 0 {
+		a.showWindow()
+	}
 	for _, paths := range shares {
-		a.CreateShare(paths, false)
+		if _, err := a.CreateShare(paths, false); err != nil {
+			a.toastError(err)
+		}
 	}
 }
 
 // handleLaunchArgs is called with the arguments of this or a second
 // instance: a share link (a clicked link) or files to share ("Open with
 // CatJump" in the file manager).
-func (a *App) handleLaunchArgs(args []string) {
+//
+// It reports whether the arguments asked for something (a link or files).
+func (a *App) handleLaunchArgs(args []string) bool {
 	if l := linkFromArgs(args); l != "" {
 		a.handleURL(l)
-		return
+		return true
 	}
 	var paths []string
 	for _, p := range args {
@@ -236,7 +260,7 @@ func (a *App) handleLaunchArgs(args []string) {
 		}
 	}
 	if len(paths) == 0 {
-		return
+		return false
 	}
 	a.mu.Lock()
 	ready := a.uiReady
@@ -245,13 +269,12 @@ func (a *App) handleLaunchArgs(args []string) {
 	}
 	a.mu.Unlock()
 	if ready {
-		if a.ctx != nil {
-			bringToFront(a)
-		}
-		if _, err := a.CreateShare(paths, false); err != nil && a.ctx != nil {
-			runtime.EventsEmit(a.ctx, "toast", map[string]string{"kind": "error", "text": err.Error()})
+		a.showWindow()
+		if _, err := a.CreateShare(paths, false); err != nil {
+			a.toastError(err)
 		}
 	}
+	return true
 }
 
 func (a *App) handleURL(link string) {
@@ -266,12 +289,9 @@ func (a *App) handleURL(link string) {
 }
 
 func (a *App) openLinkFromOS(link string) {
-	if a.ctx != nil {
-		runtime.WindowUnminimise(a.ctx)
-		runtime.WindowShow(a.ctx)
-	}
-	if _, err := a.OpenLink(link); err != nil && a.ctx != nil {
-		runtime.EventsEmit(a.ctx, "toast", map[string]string{"kind": "error", "text": err.Error()})
+	a.showWindow()
+	if _, err := a.OpenLink(link); err != nil {
+		a.toastError(err)
 	}
 }
 
@@ -391,12 +411,18 @@ func (a *App) ClearFinished() {
 
 // PickFiles opens a file dialog and returns the selected paths.
 func (a *App) PickFiles() ([]string, error) {
-	return runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose files to share"})
+	if a.desktop == nil {
+		return nil, nil
+	}
+	return a.desktop.openDialog("Choose files to share", "", false).PromptForMultipleSelection()
 }
 
 // PickFolder opens a folder dialog for sharing a whole folder.
 func (a *App) PickFolder() (string, error) {
-	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose a folder to share"})
+	if a.desktop == nil {
+		return "", nil
+	}
+	return a.desktop.openDialog("Choose a folder to share", "", true).PromptForSingleSelection()
 }
 
 // ChooseDownloadDir lets the user change where received files go.
@@ -404,10 +430,10 @@ func (a *App) ChooseDownloadDir() (Settings, error) {
 	a.mu.Lock()
 	cur := a.settings.DownloadDir
 	a.mu.Unlock()
-	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:            "Where to save received files",
-		DefaultDirectory: cur,
-	})
+	if a.desktop == nil {
+		return a.settings, nil
+	}
+	dir, err := a.desktop.openDialog("Where to save received files", cur, true).PromptForSingleSelection()
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if err != nil || dir == "" {
@@ -442,7 +468,44 @@ func (a *App) Reveal(p string) error {
 
 // CopyText puts text on the clipboard.
 func (a *App) CopyText(s string) error {
-	return runtime.ClipboardSetText(a.ctx, s)
+	if a.desktop == nil || !a.desktop.app.Clipboard.SetText(s) {
+		return errors.New("couldn't copy to the clipboard")
+	}
+	return nil
+}
+
+// HideWindow hides the window back into the tray.
+func (a *App) HideWindow() {
+	if a.desktop != nil {
+		a.desktop.hide()
+	}
+}
+
+// Quit exits CatJump, stopping all shares.
+func (a *App) Quit() {
+	if a.desktop != nil {
+		a.desktop.app.Quit()
+	}
+}
+
+// GetAutostart reports whether CatJump starts with the computer.
+func (a *App) GetAutostart() bool {
+	if a.desktop == nil {
+		return false
+	}
+	on, err := a.desktop.app.Autostart.IsEnabled()
+	return err == nil && on
+}
+
+// SetAutostart turns starting with the computer on or off.
+func (a *App) SetAutostart(on bool) error {
+	if a.desktop == nil {
+		return nil
+	}
+	if on {
+		return a.desktop.app.Autostart.EnableWithOptions(application.AutostartOptions{Arguments: []string{backgroundFlag}})
+	}
+	return a.desktop.app.Autostart.Disable()
 }
 
 // ---- settings ----
