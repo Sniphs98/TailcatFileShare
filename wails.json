@@ -1,24 +1,24 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "katzensprung",
-  "outputfilename": "katzensprung",
+  "name": "catjump",
+  "outputfilename": "catjump",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "Katzensprung"
+    "name": "CatJump"
   },
   "info": {
-    "companyName": "Katzensprung",
-    "productName": "Katzensprung",
+    "companyName": "CatJump",
+    "productName": "CatJump",
     "productVersion": "0.1.0",
-    "copyright": "Katzensprung contributors",
+    "copyright": "CatJump contributors",
     "comments": "Share files directly, powered by tailcat",
     "protocols": [
       {
-        "scheme": "katzensprung",
-        "description": "Katzensprung share link",
+        "scheme": "catjump",
+        "description": "CatJump share link",
         "role": "Viewer"
       }
     ]

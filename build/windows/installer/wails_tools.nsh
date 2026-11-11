@@ -5,19 +5,19 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME "katzensprung"
+    !define INFO_PROJECTNAME "catjump"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "Katzensprung"
+    !define INFO_COMPANYNAME "CatJump"
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "Katzensprung"
+    !define INFO_PRODUCTNAME "CatJump"
 !endif
 !ifndef INFO_PRODUCTVERSION
     !define INFO_PRODUCTVERSION "0.1.0"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "Katzensprung contributors"
+    !define INFO_COPYRIGHT "CatJump contributors"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"
@@ -263,7 +263,7 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 !macro wails.associateCustomProtocols
     ; Create custom protocols associations
     
-      !insertmacro CUSTOM_PROTOCOL_ASSOCIATE "katzensprung" "Katzensprung share link" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+      !insertmacro CUSTOM_PROTOCOL_ASSOCIATE "catjump" "CatJump share link" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
 
     
 !macroend
@@ -271,6 +271,6 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 !macro wails.unassociateCustomProtocols
     ; Delete app custom protocol associations
     
-      !insertmacro CUSTOM_PROTOCOL_UNASSOCIATE "katzensprung"
+      !insertmacro CUSTOM_PROTOCOL_UNASSOCIATE "catjump"
     
 !macroend

@@ -307,7 +307,7 @@ $('#receive-form').addEventListener('submit', guard(async (ev) => {
 document.addEventListener('paste', (ev) => {
   if (document.activeElement === $('#link-input')) return;
   const text = ev.clipboardData?.getData('text') ?? '';
-  if (/^\s*katzensprung:/i.test(text)) {
+  if (/^\s*catjump:/i.test(text)) {
     $('#link-input').value = text.trim();
     $('#link-input').focus();
   }

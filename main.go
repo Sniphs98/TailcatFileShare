@@ -25,7 +25,7 @@ func main() {
 	app.handleLaunchArgs(os.Args[1:])
 
 	err := wails.Run(&options.App{
-		Title:     "Katzensprung",
+		Title:     "CatJump",
 		Width:     1080,
 		Height:    720,
 		MinWidth:  760,
@@ -41,7 +41,7 @@ func main() {
 			DisableWebViewDrop: true,
 		},
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "de.katzensprung.app.7f3c1e",
+			UniqueId: "dev.catjump.app.7f3c1e",
 			OnSecondInstanceLaunch: func(d options.SecondInstanceData) {
 				app.handleLaunchArgs(d.Args)
 				if app.ctx != nil {
@@ -54,7 +54,7 @@ func main() {
 		Mac: &mac.Options{
 			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{
-				Title:   "Katzensprung",
+				Title:   "CatJump",
 				Message: "Share files directly and end-to-end encrypted, powered by tailcat.",
 				Icon:    icon,
 			},
@@ -62,7 +62,7 @@ func main() {
 		},
 		Linux: &linux.Options{
 			Icon:        icon,
-			ProgramName: "katzensprung",
+			ProgramName: "catjump",
 		},
 	})
 	if err != nil {

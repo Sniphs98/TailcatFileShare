@@ -215,7 +215,7 @@ func (a *App) UIReady() {
 
 // handleLaunchArgs is called with the arguments of this or a second
 // instance: a share link (a clicked link) or files to share ("Open with
-// Katzensprung" in the file manager).
+// CatJump" in the file manager).
 func (a *App) handleLaunchArgs(args []string) {
 	if l := linkFromArgs(args); l != "" {
 		a.handleURL(l)
@@ -452,7 +452,7 @@ func configPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "Katzensprung", "config.json")
+	return filepath.Join(dir, "CatJump", "config.json")
 }
 
 func defaultDownloadDir() string {

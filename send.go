@@ -146,7 +146,7 @@ func (s *share) run() {
 	srv := &tailcat.Server{
 		Logf:       logger.Discard,
 		Region:     derpRegionOverride,
-		DERPMapURL: os.Getenv("KATZENSPRUNG_DERPMAP_URL"),
+		DERPMapURL: os.Getenv("CATJUMP_DERPMAP_URL"),
 	}
 	ctx, cancel := context.WithTimeout(s.ctx, 45*time.Second)
 	ln, err := srv.Listen(ctx, "tcp", fmt.Sprintf(":%d", transferPort))

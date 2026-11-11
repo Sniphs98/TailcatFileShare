@@ -65,17 +65,17 @@ func TestParseLink(t *testing.T) {
 	addr := "tcomFwWCCcjS5nKNqAod034nWoJZW0LZqDhhC8U_dKdnDRYQ8uNGFpGQEu"
 	for _, in := range []string{
 		addr,
-		"katzensprung://get/" + addr,
-		"katzensprung://get/" + addr + "/",
-		"KATZENSPRUNG://get/" + addr,
-		" <katzensprung://get/" + addr + "> ",
+		"catjump://get/" + addr,
+		"catjump://get/" + addr + "/",
+		"CATJUMP://get/" + addr,
+		" <catjump://get/" + addr + "> ",
 	} {
 		got, err := parseLink(in)
 		if err != nil || string(got) != addr {
 			t.Errorf("parseLink(%q) = %q, %v", in, got, err)
 		}
 	}
-	for _, in := range []string{"", "https://example.com/" + addr, "katzensprung://get/nope"} {
+	for _, in := range []string{"", "https://example.com/" + addr, "catjump://get/nope"} {
 		if _, err := parseLink(in); err == nil {
 			t.Errorf("parseLink(%q): want error", in)
 		}

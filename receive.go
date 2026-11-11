@@ -41,7 +41,7 @@ func (a *App) receive(ctx context.Context, t *transfer, addr tailcat.Addr) {
 	c := &tailcat.Client{
 		Server:     addr,
 		Logf:       logger.Discard,
-		DERPMapURL: os.Getenv("KATZENSPRUNG_DERPMAP_URL"),
+		DERPMapURL: os.Getenv("CATJUMP_DERPMAP_URL"),
 	}
 	defer func() {
 		dctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -166,7 +166,7 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 				return fmt.Errorf("can't create folder %s: %w", d, err)
 			}
 		}
-		part := filepath.FromSlash(dst + ".katzensprung-part")
+		part := filepath.FromSlash(dst + ".catjump-part")
 		out, err := root.OpenFile(part, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
 		if err != nil {
 			cleanup()

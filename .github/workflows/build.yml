@@ -47,8 +47,8 @@ jobs:
       - run: wails build -platform ${{ matrix.platform }} ${{ matrix.flags }}
         shell: bash
       - if: runner.os == 'macOS'
-        run: cd build/bin && for a in *.app; do ditto -c -k --keepParent "$a" Katzensprung-macOS.zip && rm -rf "$a"; done
+        run: cd build/bin && for a in *.app; do ditto -c -k --keepParent "$a" CatJump-macOS.zip && rm -rf "$a"; done
       - uses: actions/upload-artifact@v4
         with:
-          name: katzensprung-${{ runner.os }}
+          name: catjump-${{ runner.os }}
           path: build/bin/*

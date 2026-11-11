@@ -1,8 +1,8 @@
-// Command devderp runs a local DERP relay for trying Katzensprung without
+// Command devderp runs a local DERP relay for trying CatJump without
 // the public tailcat relays (or without internet access):
 //
 //	go run ./tools/devderp
-//	KATZENSPRUNG_DERPMAP_URL=http://127.0.0.1:8475/derpmap.json ./katzensprung
+//	CATJUMP_DERPMAP_URL=http://127.0.0.1:8475/derpmap.json ./catjump
 //
 // It is for development only: the relay uses a self-signed certificate that
 // clients accept without verification.

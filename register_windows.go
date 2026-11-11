@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-// registerProtocol registers katzensprung:// links for the current user
+// registerProtocol registers catjump:// links for the current user
 // (HKCU, no admin rights needed), so the portable .exe works without the
 // installer. The NSIS installer registers the same keys.
 func registerProtocol() {
@@ -25,7 +25,7 @@ func registerProtocol() {
 	if err != nil {
 		return
 	}
-	k.SetStringValue("", "URL:Katzensprung")
+	k.SetStringValue("", "URL:CatJump")
 	k.SetStringValue("URL Protocol", "")
 	k.Close()
 	if k, _, err := registry.CreateKey(registry.CURRENT_USER, base+`\DefaultIcon`, registry.ALL_ACCESS); err == nil {

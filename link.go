@@ -8,7 +8,7 @@ import (
 	"github.com/tailscale/tailcat"
 )
 
-const linkScheme = "katzensprung"
+const linkScheme = "catjump"
 
 // makeLink turns a tailcat address into a share link. The address goes in
 // the path, not the host: tailcat addresses are case-sensitive and URL
@@ -29,13 +29,13 @@ func parseLink(s string) (tailcat.Addr, error) {
 	if strings.Contains(s, "://") {
 		u, err := url.Parse(s)
 		if err != nil || !strings.EqualFold(u.Scheme, linkScheme) {
-			return "", errors.New("that is not a Katzensprung link")
+			return "", errors.New("that is not a CatJump link")
 		}
 		p := strings.Trim(u.Path, "/")
 		if strings.EqualFold(u.Host, "get") {
 			addr = p
 		} else {
-			// katzensprung:///get/<addr> or katzensprung://<addr>
+			// catjump:///get/<addr> or catjump://<addr>
 			addr = strings.TrimPrefix(p, "get/")
 			if addr == "" {
 				addr = u.Host
