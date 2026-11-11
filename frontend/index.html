@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Katzensprung</title>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar" style="--wails-draggable: drag">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="24" height="24"><path d="M6.5 6 11.5 11h9l5-5v13.5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8Z" fill="#000"/><circle cx="12.6" cy="18" r="1.6" fill="#fff"/><circle cx="19.4" cy="18" r="1.6" fill="#fff"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Katzensprung</div>
+        <div class="brand-sub">Direkt teilen, Ende-zu-Ende verschlüsselt</div>
+      </div>
+    </div>
+    <button class="chip" id="dl-dir" style="--wails-draggable: no-drag" title="Speicherort für empfangene Dateien ändern">
+      <svg class="i"><use href="#i-folder"/></svg>
+      <span id="dl-dir-label">Downloads</span>
+    </button>
+  </header>
+
+  <main class="grid">
+    <section class="col">
+      <div class="col-head">
+        <h2>Senden</h2>
+        <label class="toggle" title="Der Link funktioniert nur für einen einzigen Download">
+          <input type="checkbox" id="one-time"/>
+          <span class="track"><span class="thumb"></span></span>
+          <span>Einmal-Link</span>
+        </label>
+      </div>
+
+      <div class="drop" id="drop">
+        <div class="drop-icon"><svg class="i lg"><use href="#i-upload"/></svg></div>
+        <div class="drop-title">Dateien oder Ordner hierher ziehen</div>
+        <div class="drop-sub">Du bekommst einen Link, den du deinen Freunden schickst.</div>
+        <div class="drop-actions">
+          <button class="btn primary" id="pick-files"><svg class="i"><use href="#i-file"/></svg>Dateien wählen</button>
+          <button class="btn ghost" id="pick-folder"><svg class="i"><use href="#i-folder"/></svg>Ordner wählen</button>
+        </div>
+      </div>
+
+      <div class="list-head">
+        <h3>Deine Freigaben</h3>
+      </div>
+      <div class="list" id="shares"></div>
+    </section>
+
+    <section class="col">
+      <div class="col-head">
+        <h2>Empfangen</h2>
+      </div>
+      <form class="receive" id="receive-form" autocomplete="off">
+        <svg class="i muted"><use href="#i-link"/></svg>
+        <input id="link-input" placeholder="Katzensprung-Link einfügen …" spellcheck="false"/>
+        <button class="btn primary" type="submit">Verbinden</button>
+      </form>
+      <p class="hint">Tipp: Wenn Katzensprung installiert ist, öffnet ein Klick auf den Link die App automatisch.</p>
+
+      <div class="list-head">
+        <h3>Aktivität</h3>
+        <button class="link-btn" id="clear-finished" hidden>Erledigte entfernen</button>
+      </div>
+      <div class="list" id="transfers"></div>
+    </section>
+  </main>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z"/></symbol>
+    <symbol id="i-relay" viewBox="0 0 24 24"><path d="M4 12h4m8 0h4"/><circle cx="12" cy="12" r="3.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.2 10.8 7.6-3.6m-7.6 6 7.6 3.6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+  </defs>
+</svg>
+
+<script src="./src/main.js" type="module"></script>
+</body>
+</html>
