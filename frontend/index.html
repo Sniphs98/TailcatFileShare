@@ -7,65 +7,126 @@
 </head>
 <body>
 <div class="app" id="app">
-  <header class="topbar" style="--wails-draggable: drag">
+  <aside class="sidebar" style="--wails-draggable: drag">
     <div class="brand">
       <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="24" height="24"><path d="M6.5 6 11.5 11h9l5-5v13.5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8Z" fill="#000"/><circle cx="12.6" cy="18" r="1.6" fill="#fff"/><circle cx="19.4" cy="18" r="1.6" fill="#fff"/></svg>
+        <svg viewBox="0 0 32 32" width="22" height="22"><path d="M6.5 6 11.5 11h9l5-5v13.5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8Z" fill="#000"/><circle cx="12.6" cy="18" r="1.6" fill="#fff"/><circle cx="19.4" cy="18" r="1.6" fill="#fff"/></svg>
       </div>
-      <div>
-        <div class="brand-name">CatJump</div>
-        <div class="brand-sub">Direct, end-to-end encrypted sharing</div>
-      </div>
+      <div class="brand-name">CatJump</div>
     </div>
-    <button class="chip" id="dl-dir" style="--wails-draggable: no-drag" title="Change where received files are saved">
-      <svg class="i"><use href="#i-folder"/></svg>
-      <span id="dl-dir-label">Downloads</span>
-    </button>
-  </header>
 
-  <main class="grid">
-    <section class="col">
-      <div class="col-head">
-        <h2>Send</h2>
-        <label class="toggle" title="The link works for a single download only">
-          <input type="checkbox" id="one-time"/>
-          <span class="track"><span class="thumb"></span></span>
-          <span>One-time link</span>
-        </label>
-      </div>
+    <nav class="nav" style="--wails-draggable: no-drag">
+      <button class="nav-item" data-view="send"><svg class="i"><use href="#i-upload"/></svg><span>Send</span><span class="count" data-count="send"></span></button>
+      <button class="nav-item" data-view="receive"><svg class="i"><use href="#i-download"/></svg><span>Receive</span><span class="count attention" data-count="receive"></span></button>
+      <button class="nav-item" data-view="activity"><svg class="i"><use href="#i-activity"/></svg><span>Activity</span><span class="count" data-count="activity"></span></button>
+      <div class="nav-spacer"></div>
+      <button class="nav-item" data-view="settings"><svg class="i"><use href="#i-settings"/></svg><span>Settings</span></button>
+    </nav>
+
+    <div class="sidebar-foot"><svg class="i sm"><use href="#i-lock"/></svg>End-to-end encrypted</div>
+  </aside>
+
+  <main class="content">
+    <!-- Send -->
+    <section class="view" data-view="send">
+      <header class="view-head" style="--wails-draggable: drag">
+        <div>
+          <h1>Send</h1>
+          <p class="lead">Share files or folders. You get a link to send to your friends.</p>
+        </div>
+      </header>
 
       <div class="drop" id="drop">
         <div class="drop-icon"><svg class="i lg"><use href="#i-upload"/></svg></div>
         <div class="drop-title">Drop files or folders here</div>
-        <div class="drop-sub">You get a link to send to your friends.</div>
         <div class="drop-actions">
           <button class="btn primary" id="pick-files"><svg class="i"><use href="#i-file"/></svg>Choose files</button>
           <button class="btn ghost" id="pick-folder"><svg class="i"><use href="#i-folder"/></svg>Choose folder</button>
         </div>
       </div>
+      <label class="toggle option" title="The link stops working after the first complete download">
+        <input type="checkbox" id="one-time"/>
+        <span class="track"><span class="thumb"></span></span>
+        <span><strong>One-time link</strong> · stops after the first download</span>
+      </label>
 
-      <div class="list-head">
-        <h3>Your shares</h3>
-      </div>
+      <div class="list-head"><h3>Your shares</h3></div>
       <div class="list" id="shares"></div>
     </section>
 
-    <section class="col">
-      <div class="col-head">
-        <h2>Receive</h2>
-      </div>
+    <!-- Receive -->
+    <section class="view" data-view="receive">
+      <header class="view-head" style="--wails-draggable: drag">
+        <div>
+          <h1>Receive</h1>
+          <p class="lead">Open a link from a friend. Clicking a <code>catjump://</code> link opens this page automatically.</p>
+        </div>
+      </header>
+
       <form class="receive" id="receive-form" autocomplete="off">
         <svg class="i muted"><use href="#i-link"/></svg>
         <input id="link-input" placeholder="Paste a CatJump link …" spellcheck="false"/>
         <button class="btn primary" type="submit">Connect</button>
       </form>
-      <p class="hint">Tip: with CatJump installed, clicking a link opens the app automatically.</p>
 
-      <div class="list-head">
-        <h3>Activity</h3>
-        <button class="link-btn" id="clear-finished" hidden>Clear finished</button>
-      </div>
+      <div class="list-head"><h3>Incoming</h3></div>
+      <div class="list" id="incoming"></div>
+    </section>
+
+    <!-- Activity -->
+    <section class="view" data-view="activity">
+      <header class="view-head" style="--wails-draggable: drag">
+        <div>
+          <h1>Activity</h1>
+          <p class="lead">Everything you sent and received in this session.</p>
+        </div>
+        <button class="btn ghost small" id="clear-finished" hidden>Clear finished</button>
+      </header>
       <div class="list" id="transfers"></div>
+    </section>
+
+    <!-- Settings -->
+    <section class="view" data-view="settings">
+      <header class="view-head" style="--wails-draggable: drag">
+        <div>
+          <h1>Settings</h1>
+          <p class="lead">Where files go and how CatJump connects.</p>
+        </div>
+      </header>
+
+      <div class="panel">
+        <div class="row">
+          <div class="row-main">
+            <div class="row-title">Download folder</div>
+            <div class="row-sub mono" id="dl-dir-path"></div>
+          </div>
+          <button class="btn ghost small" id="dl-open"><svg class="i sm"><use href="#i-eye"/></svg>Open</button>
+          <button class="btn primary small" id="dl-change">Change</button>
+        </div>
+        <div class="row">
+          <div class="row-main">
+            <div class="row-title">Existing files</div>
+            <div class="row-sub">Never overwritten. New files get a name like <span class="mono">photo (2).jpg</span>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="row">
+          <div class="row-main">
+            <div class="row-title">Connection</div>
+            <div class="row-sub">Connections start through a relay and switch to a direct peer-to-peer path when possible. The relay only sees encrypted WireGuard packets.</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-main">
+            <div class="row-title">Security</div>
+            <div class="row-sub">Anyone with a link can download the share while it's running. Share links privately and stop shares you no longer need.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="about">CatJump 0.1.0 · built on <span class="mono">tailcat</span> · not affiliated with Tailscale Inc.</p>
     </section>
   </main>
 </div>
@@ -87,6 +148,8 @@
     <symbol id="i-relay" viewBox="0 0 24 24"><path d="M4 12h4m8 0h4"/><circle cx="12" cy="12" r="3.5"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
     <symbol id="i-share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.2 10.8 7.6-3.6m-7.6 6 7.6 3.6"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.5"/></symbol>
   </defs>
 </svg>

@@ -21,8 +21,8 @@ Tailscale account or control plane.
 3. **Receive:** Your friend clicks the link and their CatJump app
    opens (or they paste the link into the app). The app shows what's coming,
    and nothing is written until they click **Accept**.
-4. The files are saved to the download folder, which you can change in the
-   top-right corner. Existing files are never overwritten: a new file gets
+4. The files are saved to your download folder, which you can change under
+   **Settings**. Existing files are never overwritten: a new file gets
    a name like `photo (2).jpg` instead.
 
 A link works as long as the share is running and the sender's app is open.
@@ -39,7 +39,9 @@ download. You can stop any share at any time with ⏹.
 - A **⚡ Direct** or **Relay** badge that shows how the connection runs
 - One-time links
 - Multiple friends can download the same share at once
-- Minimal black-and-white UI
+- Minimal black-and-white UI with separate **Send**, **Receive**,
+  **Activity** and **Settings** pages; a clicked link jumps straight to
+  **Receive**
 
 ### Connection
 

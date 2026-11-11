@@ -36,7 +36,6 @@ function ago(ms) {
 }
 
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
-const baseName = (p) => (p || 'Downloads').replace(/[\\/]+$/, '').split(/[\\/]/).pop() || p;
 
 // ---------- toasts ----------
 
@@ -246,11 +245,32 @@ function patchTransfer(el, t) {
 let state = { shares: [], transfers: [], settings: {} };
 const seenAwaiting = new Set();
 
+// ---------- navigation ----------
+
+let view = 'send';
+try { view = localStorage.getItem('view') || 'send'; } catch {}
+
+function show(v) {
+  view = v;
+  document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.dataset.view === v));
+  document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === v));
+  try { localStorage.setItem('view', v); } catch {}
+}
+document.querySelectorAll('.nav-item').forEach((el) => el.addEventListener('click', () => show(el.dataset.view)));
+show(view);
+
+const badge = (name, n) => set(document, `[data-count=${name}]`, n ? String(n) : '');
+
+const transferList = {
+  sig: (t) => `${t.status}|${t.title}|${!!t.savedTo}`,
+  build: buildTransfer,
+  patch: patchTransfer,
+};
+
 function render(st) {
   state = st;
   document.body.classList.add(`platform-${st.platform}`);
-  set(document, '#dl-dir-label', baseName(st.settings.downloadDir));
-  $('#dl-dir').title = `Received files are saved to:\n${st.settings.downloadDir}\n\nClick to change`;
+  set(document, '#dl-dir-path', st.settings.downloadDir || '');
 
   reconcile($('#shares'), st.shares, {
     sig: (s) => `${s.status}|${s.link}|${s.active > 0}`,
@@ -258,18 +278,26 @@ function render(st) {
     patch: patchShare,
     empty: `<div class="empty"><strong>Nothing shared yet</strong>Drop files above to create a link.</div>`,
   });
+  reconcile($('#incoming'), st.transfers.filter((t) => t.direction === 'recv'), {
+    ...transferList,
+    empty: `<div class="empty"><strong>Nothing incoming</strong>Paste a link above, or click a <span class="mono">catjump://</span> link someone sent you.</div>`,
+  });
   reconcile($('#transfers'), st.transfers, {
-    sig: (t) => `${t.status}|${t.title}|${!!t.savedTo}`,
-    build: buildTransfer,
-    patch: patchTransfer,
-    empty: `<div class="empty"><strong>No transfers</strong>Downloads by your friends and files you receive show up here.</div>`,
+    ...transferList,
+    empty: `<div class="empty"><strong>No activity yet</strong>Downloads by your friends and files you receive show up here.</div>`,
   });
   $('#clear-finished').hidden = !st.transfers.some((t) => FINISHED.has(t.status));
 
+  badge('send', st.shares.filter((s) => s.status === 'ready' || s.status === 'starting').length);
+  badge('receive', st.transfers.filter((t) => t.status === 'awaiting').length);
+  badge('activity', st.transfers.filter((t) => !FINISHED.has(t.status) && t.status !== 'awaiting').length);
+
+  // A new offer (usually from a clicked link) brings the Receive page up.
   for (const t of st.transfers) {
     if (t.status === 'awaiting' && !seenAwaiting.has(t.id)) {
       seenAwaiting.add(t.id);
-      document.querySelector(`#transfers [data-id="${t.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      show('receive');
+      document.querySelector(`#incoming [data-id="${t.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 }
@@ -279,6 +307,7 @@ function render(st) {
 async function share(paths) {
   if (!paths?.length) return;
   await CreateShare(paths, $('#one-time').checked);
+  show('send');
   toast('Creating share. The link will appear in a moment');
 }
 
@@ -287,12 +316,12 @@ $('#pick-folder').addEventListener('click', guard(async () => {
   const p = await PickFolder();
   if (p) await share([p]);
 }));
-$('#dl-dir').addEventListener('click', guard(async () => {
+$('#dl-change').addEventListener('click', guard(async () => {
   const s = await ChooseDownloadDir();
   state.settings = s;
-  set(document, '#dl-dir-label', baseName(s.downloadDir));
-  toast(`Received files will now be saved to ${s.downloadDir}`);
+  set(document, '#dl-dir-path', s.downloadDir);
 }));
+$('#dl-open').addEventListener('click', guard(() => Reveal(state.settings.downloadDir)));
 $('#clear-finished').addEventListener('click', guard(() => ClearFinished()));
 
 $('#receive-form').addEventListener('submit', guard(async (ev) => {
