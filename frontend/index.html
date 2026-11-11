@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -14,10 +14,10 @@
       </div>
       <div>
         <div class="brand-name">Katzensprung</div>
-        <div class="brand-sub">Direkt teilen, Ende-zu-Ende verschlüsselt</div>
+        <div class="brand-sub">Direct, end-to-end encrypted sharing</div>
       </div>
     </div>
-    <button class="chip" id="dl-dir" style="--wails-draggable: no-drag" title="Speicherort für empfangene Dateien ändern">
+    <button class="chip" id="dl-dir" style="--wails-draggable: no-drag" title="Change where received files are saved">
       <svg class="i"><use href="#i-folder"/></svg>
       <span id="dl-dir-label">Downloads</span>
     </button>
@@ -26,44 +26,44 @@
   <main class="grid">
     <section class="col">
       <div class="col-head">
-        <h2>Senden</h2>
-        <label class="toggle" title="Der Link funktioniert nur für einen einzigen Download">
+        <h2>Send</h2>
+        <label class="toggle" title="The link works for a single download only">
           <input type="checkbox" id="one-time"/>
           <span class="track"><span class="thumb"></span></span>
-          <span>Einmal-Link</span>
+          <span>One-time link</span>
         </label>
       </div>
 
       <div class="drop" id="drop">
         <div class="drop-icon"><svg class="i lg"><use href="#i-upload"/></svg></div>
-        <div class="drop-title">Dateien oder Ordner hierher ziehen</div>
-        <div class="drop-sub">Du bekommst einen Link, den du deinen Freunden schickst.</div>
+        <div class="drop-title">Drop files or folders here</div>
+        <div class="drop-sub">You get a link to send to your friends.</div>
         <div class="drop-actions">
-          <button class="btn primary" id="pick-files"><svg class="i"><use href="#i-file"/></svg>Dateien wählen</button>
-          <button class="btn ghost" id="pick-folder"><svg class="i"><use href="#i-folder"/></svg>Ordner wählen</button>
+          <button class="btn primary" id="pick-files"><svg class="i"><use href="#i-file"/></svg>Choose files</button>
+          <button class="btn ghost" id="pick-folder"><svg class="i"><use href="#i-folder"/></svg>Choose folder</button>
         </div>
       </div>
 
       <div class="list-head">
-        <h3>Deine Freigaben</h3>
+        <h3>Your shares</h3>
       </div>
       <div class="list" id="shares"></div>
     </section>
 
     <section class="col">
       <div class="col-head">
-        <h2>Empfangen</h2>
+        <h2>Receive</h2>
       </div>
       <form class="receive" id="receive-form" autocomplete="off">
         <svg class="i muted"><use href="#i-link"/></svg>
-        <input id="link-input" placeholder="Katzensprung-Link einfügen …" spellcheck="false"/>
-        <button class="btn primary" type="submit">Verbinden</button>
+        <input id="link-input" placeholder="Paste a Katzensprung link …" spellcheck="false"/>
+        <button class="btn primary" type="submit">Connect</button>
       </form>
-      <p class="hint">Tipp: Wenn Katzensprung installiert ist, öffnet ein Klick auf den Link die App automatisch.</p>
+      <p class="hint">Tip: with Katzensprung installed, clicking a link opens the app automatically.</p>
 
       <div class="list-head">
-        <h3>Aktivität</h3>
-        <button class="link-btn" id="clear-finished" hidden>Erledigte entfernen</button>
+        <h3>Activity</h3>
+        <button class="link-btn" id="clear-finished" hidden>Clear finished</button>
       </div>
       <div class="list" id="transfers"></div>
     </section>

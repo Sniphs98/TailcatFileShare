@@ -97,7 +97,7 @@ func (a *App) StopShare(id string) error {
 	s, ok := a.shares[id]
 	a.mu.Unlock()
 	if !ok {
-		return errors.New("freigabe nicht gefunden")
+		return errors.New("share not found")
 	}
 	s.stop()
 	return nil
@@ -154,7 +154,7 @@ func (s *share) run() {
 	if err != nil {
 		srv.Close()
 		if s.ctx.Err() == nil {
-			s.setStatus("error", "Verbindung zum Relay fehlgeschlagen: "+err.Error())
+			s.setStatus("error", "Couldn't connect to the relay: "+err.Error())
 		}
 		return
 	}
@@ -164,7 +164,7 @@ func (s *share) run() {
 		s.srv, s.ln = srv, ln
 		s.Link = makeLink(srv.TailcatAddr())
 		s.Status = "ready"
-		fmt.Printf("Freigabe %q bereit: %s\n", s.Title, s.Link)
+		fmt.Printf("Share %q ready: %s\n", s.Title, s.Link)
 	}
 	s.app.mu.Unlock()
 	if stopped {
@@ -230,7 +230,7 @@ func (s *share) serve(c net.Conn) {
 		a.update(t, func(t *transfer) {
 			if t.Status != "cancelled" {
 				t.Status = "cancelled"
-				t.Error = "Freigabe beendet"
+				t.Error = "Share stopped"
 			}
 		})
 	default:
@@ -238,7 +238,7 @@ func (s *share) serve(c net.Conn) {
 	}
 }
 
-var errDeclined = errors.New("vom Empfänger abgelehnt")
+var errDeclined = errors.New("declined by the recipient")
 
 func (s *share) send(ctx context.Context, c net.Conn, t *transfer) error {
 	m := manifest{Version: protocolVersion, Title: s.Title, Total: s.Total}
@@ -246,7 +246,7 @@ func (s *share) send(ctx context.Context, c net.Conn, t *transfer) error {
 		m.Files = append(m.Files, manifestFile{Path: f.rel, Size: f.size})
 	}
 	if err := writeLine(c, m); err != nil {
-		return fmt.Errorf("Empfänger nicht erreichbar: %w", err)
+		return fmt.Errorf("recipient unreachable: %w", err)
 	}
 	br := bufio.NewReader(c)
 	var r reply
@@ -254,7 +254,7 @@ func (s *share) send(ctx context.Context, c net.Conn, t *transfer) error {
 		if errors.Is(err, io.EOF) {
 			return errDeclined
 		}
-		return fmt.Errorf("Verbindung abgebrochen: %w", err)
+		return fmt.Errorf("connection lost: %w", err)
 	}
 	if !r.Accept {
 		return errDeclined
@@ -268,15 +268,15 @@ func (s *share) send(ctx context.Context, c net.Conn, t *transfer) error {
 		}
 	}
 	if err := bw.Flush(); err != nil {
-		return fmt.Errorf("Übertragung abgebrochen: %w", err)
+		return fmt.Errorf("transfer aborted: %w", err)
 	}
 	s.app.update(t, func(t *transfer) { t.Status = "verifying" })
 	var d doneMsg
 	if err := readLine(br, &d); err != nil {
-		return fmt.Errorf("keine Bestätigung vom Empfänger: %w", err)
+		return fmt.Errorf("no confirmation from the recipient: %w", err)
 	}
 	if !d.OK {
-		return fmt.Errorf("Empfänger meldet Fehler: %s", d.Error)
+		return fmt.Errorf("recipient reported an error: %s", d.Error)
 	}
 	return nil
 }
@@ -284,15 +284,15 @@ func (s *share) send(ctx context.Context, c net.Conn, t *transfer) error {
 func copyFile(w io.Writer, f sourceFile) error {
 	fh, err := os.Open(f.abs)
 	if err != nil {
-		return fmt.Errorf("%s kann nicht gelesen werden: %w", f.rel, err)
+		return fmt.Errorf("can't read %s: %w", f.rel, err)
 	}
 	defer fh.Close()
 	n, err := io.CopyN(w, fh, f.size)
 	if err != nil {
 		if n < f.size && (errors.Is(err, io.EOF)) {
-			return fmt.Errorf("%s wurde während des Sendens verkleinert", f.rel)
+			return fmt.Errorf("%s shrank while it was being sent", f.rel)
 		}
-		return fmt.Errorf("Übertragung abgebrochen: %w", err)
+		return fmt.Errorf("transfer aborted: %w", err)
 	}
 	return nil
 }
@@ -335,7 +335,7 @@ func (s *share) watchRoute(ctx context.Context, t *transfer, peer key.NodePublic
 // regular files to send, with the relative names the receiver will see.
 func collectFiles(paths []string) ([]sourceFile, error) {
 	if len(paths) == 0 {
-		return nil, errors.New("keine Dateien ausgewählt")
+		return nil, errors.New("no files selected")
 	}
 	var out []sourceFile
 	usedTop := map[string]bool{}
@@ -347,11 +347,11 @@ func collectFiles(paths []string) ([]sourceFile, error) {
 		}
 		top := uniqueName(cleanComponent(filepath.Base(p)), usedTop)
 		if top == "" {
-			top = uniqueName("Datei", usedTop)
+			top = uniqueName("file", usedTop)
 		}
 		if !fi.IsDir() {
 			if !fi.Mode().IsRegular() {
-				return nil, fmt.Errorf("%s ist keine normale Datei", filepath.Base(p))
+				return nil, fmt.Errorf("%s is not a regular file", filepath.Base(p))
 			}
 			out = append(out, sourceFile{abs: p, rel: top, size: fi.Size()})
 			continue
@@ -383,14 +383,14 @@ func collectFiles(paths []string) ([]sourceFile, error) {
 		}
 	}
 	if len(out) == 0 {
-		return nil, errors.New("die Auswahl enthält keine Dateien")
+		return nil, errors.New("the selection contains no files")
 	}
 	// Two source names can map to the same sanitized name.
 	seen := map[string]bool{}
 	for _, f := range out {
 		k := strings.ToLower(f.rel)
 		if seen[k] {
-			return nil, fmt.Errorf("doppelter Dateiname %q", f.rel)
+			return nil, fmt.Errorf("duplicate file name %q", f.rel)
 		}
 		seen[k] = true
 	}
@@ -425,8 +425,8 @@ func shareTitle(files []sourceFile) string {
 	case 1:
 		return tops[0]
 	case 2:
-		return tops[0] + " und " + tops[1]
+		return tops[0] + " and " + tops[1]
 	default:
-		return fmt.Sprintf("%s und %d weitere", tops[0], len(tops)-1)
+		return fmt.Sprintf("%s and %d more", tops[0], len(tops)-1)
 	}
 }

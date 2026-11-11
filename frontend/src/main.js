@@ -17,24 +17,25 @@ function fmtBytes(n) {
   const u = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), u.length - 1);
   const v = n / 1024 ** i;
-  return `${v >= 100 || i === 0 ? Math.round(v) : v.toFixed(1).replace('.', ',')} ${u[i]}`;
+  return `${v >= 100 || i === 0 ? Math.round(v) : v.toFixed(1)} ${u[i]}`;
 }
 const fmtSpeed = (bps) => (bps > 0 ? `${fmtBytes(bps)}/s` : '');
 function fmtEta(t) {
   if (!(t.speed > 0) || t.done >= t.total) return '';
   const s = Math.round((t.total - t.done) / t.speed);
-  if (s < 60) return `noch ${s} s`;
-  if (s < 3600) return `noch ${Math.round(s / 60)} min`;
-  return `noch ${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min`;
+  if (s < 60) return `${s} s left`;
+  if (s < 3600) return `${Math.round(s / 60)} min left`;
+  return `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min left`;
 }
-const fileCount = (n) => (n === 1 ? '1 Datei' : `${n} Dateien`);
+const fileCount = (n) => (n === 1 ? '1 file' : `${n} files`);
 function ago(ms) {
   const s = Math.round((Date.now() - ms) / 1000);
-  if (s < 60) return 'gerade eben';
-  if (s < 3600) return `vor ${Math.round(s / 60)} min`;
-  return `vor ${Math.round(s / 3600)} h`;
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  return `${Math.round(s / 3600)} h ago`;
 }
 
+const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const baseName = (p) => (p || 'Downloads').replace(/[\\/]+$/, '').split(/[\\/]/).pop() || p;
 
 // ---------- toasts ----------
@@ -91,13 +92,13 @@ const set = (el, sel, text) => { const n = el.querySelector(sel); if (n && n.tex
 
 function shareStatus(s) {
   switch (s.status) {
-    case 'starting': return `<span class="pill accent live">Startet</span>`;
+    case 'starting': return `<span class="pill accent live">Starting</span>`;
     case 'ready':
       return s.active > 0
-        ? `<span class="pill ok live">${s.active} aktiv</span>`
+        ? `<span class="pill ok live">${s.active} active</span>`
         : `<span class="pill ok live">Online</span>`;
-    case 'error': return `<span class="pill bad">Fehler</span>`;
-    default: return `<span class="pill">Beendet</span>`;
+    case 'error': return `<span class="pill bad">Error</span>`;
+    default: return `<span class="pill">Stopped</span>`;
   }
 }
 
@@ -105,10 +106,10 @@ function buildShare(el, s) {
   el.className = 'card';
   let body = '';
   if (s.status === 'starting') {
-    body = `<div class="skeleton">Sicherer Tunnel wird aufgebaut …</div>`;
+    body = `<div class="skeleton">Setting up a secure tunnel …</div>`;
   } else if (s.status === 'ready') {
     body = `<div class="linkbox"><code title="${esc(s.link)}">${esc(s.link)}</code>
-      <button class="btn primary small" data-act="copy">${icon('copy', 'sm')}<span>Link kopieren</span></button></div>`;
+      <button class="btn primary small" data-act="copy">${icon('copy', 'sm')}<span>Copy link</span></button></div>`;
   } else if (s.status === 'error') {
     body = `<div class="card-sub" style="margin-top:10px"><span class="err">${esc(s.error)}</span></div>`;
   }
@@ -121,22 +122,22 @@ function buildShare(el, s) {
         <div class="card-sub">
           <span>${fileCount(s.fileCount)} · ${fmtBytes(s.total)}</span><span class="sep">·</span>
           <span data-f="status">${shareStatus(s)}</span>
-          ${s.oneTime ? `<span class="pill accent">Einmal-Link</span>` : ''}
+          ${s.oneTime ? `<span class="pill accent">One-time link</span>` : ''}
           <span data-f="dl"></span>
         </div>
       </div>
       <div class="card-actions">
         ${live
-          ? `<button class="icon-btn" data-act="stop" title="Freigabe beenden">${icon('stop')}</button>`
-          : `<button class="icon-btn" data-act="remove" title="Entfernen">${icon('x')}</button>`}
+          ? `<button class="icon-btn" data-act="stop" title="Stop sharing">${icon('stop')}</button>`
+          : `<button class="icon-btn" data-act="remove" title="Remove">${icon('x')}</button>`}
       </div>
     </div>${body}`;
   el.querySelector('[data-act=copy]')?.addEventListener('click', guard(async (ev) => {
     await CopyText(s.link);
     const b = ev.currentTarget;
     b.classList.add('copied');
-    b.querySelector('span').textContent = 'Kopiert!';
-    setTimeout(() => { b.classList.remove('copied'); b.querySelector('span').textContent = 'Link kopieren'; }, 1600);
+    b.querySelector('span').textContent = 'Copied!';
+    setTimeout(() => { b.classList.remove('copied'); b.querySelector('span').textContent = 'Copy link'; }, 1600);
   }));
   el.querySelector('[data-act=stop]')?.addEventListener('click', guard(() => StopShare(s.id)));
   el.querySelector('[data-act=remove]')?.addEventListener('click', guard(() => RemoveShare(s.id)));
@@ -146,7 +147,7 @@ function patchShare(el, s) {
   const st = el.querySelector('[data-f=status]');
   const html = shareStatus(s);
   if (st && st.innerHTML !== html) st.innerHTML = html;
-  set(el, '[data-f=dl]', s.downloads ? `· ${s.downloads}× heruntergeladen` : '');
+  set(el, '[data-f=dl]', s.downloads ? `· ${s.downloads}× downloaded` : '');
 }
 
 // ---------- transfers ----------
@@ -156,15 +157,15 @@ const FINISHED = new Set(['done', 'declined', 'error', 'cancelled']);
 function statusText(t) {
   const recv = t.direction === 'recv';
   switch (t.status) {
-    case 'connecting': return recv ? 'Verbinde mit Absender …' : 'Verbindung wird aufgebaut …';
-    case 'awaiting': return 'Möchtest du diese Dateien empfangen?';
-    case 'waiting': return 'Empfänger entscheidet …';
-    case 'transferring': return recv ? 'Empfange …' : 'Sende …';
-    case 'verifying': return 'Wird abgeschlossen …';
-    case 'done': return recv ? 'Gespeichert' : 'Zugestellt';
-    case 'declined': return recv ? 'Abgelehnt' : 'Vom Empfänger abgelehnt';
-    case 'cancelled': return t.error || 'Abgebrochen';
-    case 'error': return t.error || 'Fehler';
+    case 'connecting': return recv ? 'Connecting to sender …' : 'Connecting …';
+    case 'awaiting': return 'Do you want to receive these files?';
+    case 'waiting': return 'Waiting for the recipient …';
+    case 'transferring': return recv ? 'Receiving …' : 'Sending …';
+    case 'verifying': return 'Finishing …';
+    case 'done': return recv ? 'Saved' : 'Delivered';
+    case 'declined': return recv ? 'Declined' : 'Declined by the recipient';
+    case 'cancelled': return cap(t.error) || 'Cancelled';
+    case 'error': return cap(t.error) || 'Error';
     default: return t.status;
   }
 }
@@ -172,8 +173,8 @@ function statusText(t) {
 function routePill(t) {
   if (!t.route || FINISHED.has(t.status)) return '';
   return t.route === 'direct'
-    ? `<span class="pill ok" title="Direkte Peer-to-Peer-Verbindung (${esc(t.routeInfo)})">${icon('bolt')}Direkt</span>`
-    : `<span class="pill warn" title="Über Relay ${esc(t.routeInfo)} – wird direkt, sobald möglich">${icon('relay')}Relay</span>`;
+    ? `<span class="pill ok" title="Direct peer-to-peer connection (${esc(t.routeInfo)})">${icon('bolt')}Direct</span>`
+    : `<span class="pill warn" title="Via relay ${esc(t.routeInfo)}; switches to direct when possible">${icon('relay')}Relay</span>`;
 }
 
 function buildTransfer(el, t) {
@@ -184,11 +185,11 @@ function buildTransfer(el, t) {
   let extra = '';
   if (t.status === 'awaiting') {
     const rows = (t.files || []).map((f) => `<li><span title="${esc(f.path)}">${esc(f.path)}</span><span>${fmtBytes(f.size)}</span></li>`).join('');
-    const more = t.fileCount > (t.files || []).length ? `<li class="more">… und ${t.fileCount - t.files.length} weitere</li>` : '';
+    const more = t.fileCount > (t.files || []).length ? `<li class="more">… and ${t.fileCount - t.files.length} more</li>` : '';
     extra = `<ul class="files">${rows}${more}</ul>
       <div class="decide">
-        <button class="btn ghost" data-act="decline">Ablehnen</button>
-        <button class="btn primary" data-act="accept">${icon('download')}Annehmen</button>
+        <button class="btn ghost" data-act="decline">Decline</button>
+        <button class="btn primary" data-act="accept">${icon('download')}Accept</button>
       </div>`;
   } else if (!fin || t.status === 'done') {
     const indet = t.status === 'connecting' || t.status === 'waiting';
@@ -198,11 +199,11 @@ function buildTransfer(el, t) {
 
   let actions = '';
   if (t.status === 'done' && recv && t.savedTo) {
-    actions += `<button class="btn ghost small" data-act="reveal">${icon('eye', 'sm')}Anzeigen</button>`;
+    actions += `<button class="btn ghost small" data-act="reveal">${icon('eye', 'sm')}Show</button>`;
   }
   actions += fin
-    ? `<button class="icon-btn" data-act="dismiss" title="Aus der Liste entfernen">${icon('x')}</button>`
-    : t.status !== 'awaiting' ? `<button class="icon-btn" data-act="cancel" title="Abbrechen">${icon('stop')}</button>` : '';
+    ? `<button class="icon-btn" data-act="dismiss" title="Remove from list">${icon('x')}</button>`
+    : t.status !== 'awaiting' ? `<button class="icon-btn" data-act="cancel" title="Cancel">${icon('stop')}</button>` : '';
 
   const subCls = t.status === 'error' ? 'err' : '';
   el.innerHTML = `
@@ -231,7 +232,7 @@ function patchTransfer(el, t) {
   const bar = el.querySelector('[data-f=bar]');
   if (bar) bar.style.width = `${pct}%`;
   const fin = FINISHED.has(t.status);
-  set(el, '[data-f=bytes]', t.total ? `${fmtBytes(t.done)} von ${fmtBytes(t.total)} · ${fileCount(t.fileCount)}` : '');
+  set(el, '[data-f=bytes]', t.total ? `${fmtBytes(t.done)} of ${fmtBytes(t.total)} · ${fileCount(t.fileCount)}` : '');
   set(el, '[data-f=rate]', fin
     ? ago(t.startedAt)
     : [fmtSpeed(t.speed), fmtEta(t)].filter(Boolean).join(' · '));
@@ -249,19 +250,19 @@ function render(st) {
   state = st;
   document.body.classList.add(`platform-${st.platform}`);
   set(document, '#dl-dir-label', baseName(st.settings.downloadDir));
-  $('#dl-dir').title = `Empfangene Dateien landen in:\n${st.settings.downloadDir}\n\nKlicken zum Ändern`;
+  $('#dl-dir').title = `Received files are saved to:\n${st.settings.downloadDir}\n\nClick to change`;
 
   reconcile($('#shares'), st.shares, {
     sig: (s) => `${s.status}|${s.link}|${s.active > 0}`,
     build: buildShare,
     patch: patchShare,
-    empty: `<div class="empty"><strong>Noch nichts geteilt</strong>Zieh Dateien in das Feld oben, um einen Link zu erzeugen.</div>`,
+    empty: `<div class="empty"><strong>Nothing shared yet</strong>Drop files above to create a link.</div>`,
   });
   reconcile($('#transfers'), st.transfers, {
     sig: (t) => `${t.status}|${t.title}|${!!t.savedTo}`,
     build: buildTransfer,
     patch: patchTransfer,
-    empty: `<div class="empty"><strong>Keine Übertragungen</strong>Hier erscheinen Downloads deiner Freunde und Dateien, die du empfängst.</div>`,
+    empty: `<div class="empty"><strong>No transfers</strong>Downloads by your friends and files you receive show up here.</div>`,
   });
   $('#clear-finished').hidden = !st.transfers.some((t) => FINISHED.has(t.status));
 
@@ -278,7 +279,7 @@ function render(st) {
 async function share(paths) {
   if (!paths?.length) return;
   await CreateShare(paths, $('#one-time').checked);
-  toast('Freigabe wird erstellt – der Link erscheint gleich');
+  toast('Creating share. The link will appear in a moment');
 }
 
 $('#pick-files').addEventListener('click', guard(async () => share(await PickFiles())));
@@ -290,7 +291,7 @@ $('#dl-dir').addEventListener('click', guard(async () => {
   const s = await ChooseDownloadDir();
   state.settings = s;
   set(document, '#dl-dir-label', baseName(s.downloadDir));
-  toast(`Empfangene Dateien landen jetzt in ${s.downloadDir}`);
+  toast(`Received files will now be saved to ${s.downloadDir}`);
 }));
 $('#clear-finished').addEventListener('click', guard(() => ClearFinished()));
 

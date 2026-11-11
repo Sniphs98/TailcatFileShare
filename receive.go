@@ -26,7 +26,7 @@ func (a *App) OpenLink(link string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	t := a.newTransfer("recv", "Verbinde …")
+	t := a.newTransfer("recv", "Connecting …")
 	ctx, cancel := context.WithCancel(context.Background())
 	a.update(t, func(t *transfer) {
 		t.cancel = cancel
@@ -57,7 +57,7 @@ func (a *App) receive(ctx context.Context, t *transfer, addr tailcat.Addr) {
 		if ctx.Err() != nil {
 			return
 		}
-		a.fail(t, errors.New("Absender nicht erreichbar – die Freigabe ist vielleicht beendet oder der PC offline"))
+		a.fail(t, errors.New("Can't reach the sender. The share may have ended or their computer is offline"))
 		return
 	}
 	defer conn.Close()
@@ -82,7 +82,7 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 	var m manifest
 	if err := readLine(br, &m); err != nil {
-		return fmt.Errorf("keine Antwort vom Absender: %w", err)
+		return fmt.Errorf("no response from the sender: %w", err)
 	}
 	conn.SetReadDeadline(time.Time{})
 	if err := m.validate(); err != nil {
@@ -122,11 +122,11 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 	dir := a.settings.DownloadDir
 	a.mu.Unlock()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("Speicherort nicht verfügbar: %w", err)
+		return fmt.Errorf("download folder unavailable: %w", err)
 	}
 	root, err := os.OpenRoot(dir)
 	if err != nil {
-		return fmt.Errorf("Speicherort nicht verfügbar: %w", err)
+		return fmt.Errorf("download folder unavailable: %w", err)
 	}
 	defer root.Close()
 
@@ -148,7 +148,7 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 	}
 
 	if err := writeLine(conn, reply{Accept: true}); err != nil {
-		return fmt.Errorf("Verbindung abgebrochen: %w", err)
+		return fmt.Errorf("connection lost: %w", err)
 	}
 	a.update(t, func(t *transfer) { t.Status = "transferring" })
 
@@ -163,14 +163,14 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 		if d := path.Dir(dst); d != "." {
 			if err := root.MkdirAll(filepath.FromSlash(d), 0o755); err != nil {
 				cleanup()
-				return fmt.Errorf("Ordner %s kann nicht angelegt werden: %w", d, err)
+				return fmt.Errorf("can't create folder %s: %w", d, err)
 			}
 		}
 		part := filepath.FromSlash(dst + ".katzensprung-part")
 		out, err := root.OpenFile(part, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
 		if err != nil {
 			cleanup()
-			return fmt.Errorf("%s kann nicht gespeichert werden: %w", dst, err)
+			return fmt.Errorf("can't save %s: %w", dst, err)
 		}
 		written = append(written, part)
 		_, err = io.CopyN(&countingWriter{w: out, t: t}, br, f.Size)
@@ -180,14 +180,14 @@ func (a *App) receiveOn(ctx context.Context, t *transfer, conn net.Conn) error {
 		if err != nil {
 			cleanup()
 			if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
-				return errors.New("Verbindung zum Absender abgebrochen")
+				return errors.New("lost connection to the sender")
 			}
-			return fmt.Errorf("Übertragung abgebrochen: %w", err)
+			return fmt.Errorf("transfer aborted: %w", err)
 		}
 		final := filepath.FromSlash(dst)
 		if err := root.Rename(part, final); err != nil {
 			cleanup()
-			return fmt.Errorf("%s kann nicht gespeichert werden: %w", dst, err)
+			return fmt.Errorf("can't save %s: %w", dst, err)
 		}
 		written[len(written)-1] = final
 	}
@@ -232,7 +232,7 @@ func shareTitleFromManifest(m manifest) string {
 	if len(m.Files) == 1 {
 		return path.Base(m.Files[0].Path)
 	}
-	return fmt.Sprintf("%d Dateien", len(m.Files))
+	return fmt.Sprintf("%d files", len(m.Files))
 }
 
 // watchClientRoute pings the sender periodically. Besides telling the UI

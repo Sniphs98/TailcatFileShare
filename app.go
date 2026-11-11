@@ -320,7 +320,7 @@ func (a *App) getTransfer(id string) (*transfer, error) {
 	defer a.mu.Unlock()
 	t, ok := a.transfers[id]
 	if !ok {
-		return nil, errors.New("übertragung nicht gefunden")
+		return nil, errors.New("transfer not found")
 	}
 	return t, nil
 }
@@ -337,7 +337,7 @@ func (a *App) decide(id string, ok bool) error {
 		return err
 	}
 	if t.decision == nil {
-		return errors.New("keine Entscheidung erwartet")
+		return errors.New("no decision pending")
 	}
 	select {
 	case t.decision <- ok:
@@ -391,12 +391,12 @@ func (a *App) ClearFinished() {
 
 // PickFiles opens a file dialog and returns the selected paths.
 func (a *App) PickFiles() ([]string, error) {
-	return runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{Title: "Dateien zum Teilen auswählen"})
+	return runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose files to share"})
 }
 
 // PickFolder opens a folder dialog for sharing a whole folder.
 func (a *App) PickFolder() (string, error) {
-	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Ordner zum Teilen auswählen"})
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose a folder to share"})
 }
 
 // ChooseDownloadDir lets the user change where received files go.
@@ -405,7 +405,7 @@ func (a *App) ChooseDownloadDir() (Settings, error) {
 	cur := a.settings.DownloadDir
 	a.mu.Unlock()
 	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:            "Speicherort für empfangene Dateien",
+		Title:            "Where to save received files",
 		DefaultDirectory: cur,
 	})
 	a.mu.Lock()

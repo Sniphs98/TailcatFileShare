@@ -14,11 +14,11 @@
     "productName": "Katzensprung",
     "productVersion": "0.1.0",
     "copyright": "Katzensprung contributors",
-    "comments": "Dateien direkt teilen, über tailcat",
+    "comments": "Share files directly, powered by tailcat",
     "protocols": [
       {
         "scheme": "katzensprung",
-        "description": "Katzensprung-Freigabelink",
+        "description": "Katzensprung share link",
         "role": "Viewer"
       }
     ]

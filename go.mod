@@ -1,4 +1,4 @@
-module katzensprung
+module github.com/Sniphs98/TailcatFileShare
 
 go 1.27.2
 

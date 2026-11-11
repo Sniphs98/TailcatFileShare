@@ -69,7 +69,7 @@ func readLine(r *bufio.Reader, v any) error {
 		}
 		line = append(line, chunk...)
 		if len(line) > maxLineBytes {
-			return errors.New("protokollzeile zu lang")
+			return errors.New("protocol line too long")
 		}
 		if !isPrefix {
 			break
@@ -81,32 +81,32 @@ func readLine(r *bufio.Reader, v any) error {
 // validate checks a manifest received from an untrusted sender.
 func (m *manifest) validate() error {
 	if m.Version != protocolVersion {
-		return fmt.Errorf("inkompatible Version des Absenders (%d)", m.Version)
+		return fmt.Errorf("incompatible sender version (%d)", m.Version)
 	}
 	if len(m.Files) == 0 {
-		return errors.New("die Freigabe enthält keine Dateien")
+		return errors.New("the share contains no files")
 	}
 	var total int64
 	seen := make(map[string]bool, len(m.Files))
 	for i := range m.Files {
 		f := &m.Files[i]
 		if f.Size < 0 {
-			return errors.New("ungültige Dateigröße")
+			return errors.New("invalid file size")
 		}
 		p, err := sanitizeRelPath(f.Path)
 		if err != nil {
-			return fmt.Errorf("ungültiger Dateiname %q: %w", f.Path, err)
+			return fmt.Errorf("invalid file name %q: %w", f.Path, err)
 		}
 		key := strings.ToLower(p)
 		if seen[key] {
-			return fmt.Errorf("doppelter Dateiname %q", p)
+			return fmt.Errorf("duplicate file name %q", p)
 		}
 		seen[key] = true
 		f.Path = p
 		total += f.Size
 	}
 	if total != m.Total {
-		return errors.New("Gesamtgröße passt nicht zu den Dateien")
+		return errors.New("total size does not match the files")
 	}
 	m.Title = cleanTitle(m.Title)
 	return nil
@@ -119,17 +119,17 @@ func (m *manifest) validate() error {
 func sanitizeRelPath(p string) (string, error) {
 	p = strings.ReplaceAll(p, "\\", "/")
 	if p == "" || strings.HasPrefix(p, "/") {
-		return "", errors.New("leer oder absolut")
+		return "", errors.New("empty or absolute")
 	}
 	parts := strings.Split(p, "/")
 	if len(parts) > 64 {
-		return "", errors.New("zu tief verschachtelt")
+		return "", errors.New("nested too deeply")
 	}
 	out := make([]string, 0, len(parts))
 	for _, c := range parts {
 		c = cleanComponent(c)
 		if c == "" || c == "." || c == ".." {
-			return "", errors.New("ungültiger Pfadbestandteil")
+			return "", errors.New("invalid path component")
 		}
 		out = append(out, c)
 	}

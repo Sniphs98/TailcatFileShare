@@ -138,7 +138,7 @@ func TestEndToEnd(t *testing.T) {
 			}
 			return v.Status == "awaiting"
 		})
-		if v := tr(); v.FileCount != 3 || v.Title != "foto.jpg und Urlaub" {
+		if v := tr(); v.FileCount != 3 || v.Title != "foto.jpg and Urlaub" {
 			t.Fatalf("awaiting transfer = %+v", v)
 		}
 		must(t, recv.AcceptTransfer(id))

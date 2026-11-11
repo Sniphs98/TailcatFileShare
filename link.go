@@ -23,13 +23,13 @@ func parseLink(s string) (tailcat.Addr, error) {
 	s = strings.TrimSpace(s)
 	s = strings.Trim(s, "<>\"'")
 	if s == "" {
-		return "", errors.New("kein Link angegeben")
+		return "", errors.New("no link given")
 	}
 	addr := s
 	if strings.Contains(s, "://") {
 		u, err := url.Parse(s)
 		if err != nil || !strings.EqualFold(u.Scheme, linkScheme) {
-			return "", errors.New("das ist kein Katzensprung-Link")
+			return "", errors.New("that is not a Katzensprung link")
 		}
 		p := strings.Trim(u.Path, "/")
 		if strings.EqualFold(u.Host, "get") {
@@ -44,7 +44,7 @@ func parseLink(s string) (tailcat.Addr, error) {
 	}
 	addr = strings.Trim(addr, "/ ")
 	if _, err := tailcat.ParseAddr(tailcat.Addr(addr)); err != nil {
-		return "", errors.New("der Link ist ungültig oder unvollständig")
+		return "", errors.New("the link is invalid or incomplete")
 	}
 	return tailcat.Addr(addr), nil
 }

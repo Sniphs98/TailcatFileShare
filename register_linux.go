@@ -39,7 +39,7 @@ func registerProtocol() {
 	desktop := fmt.Sprintf(`[Desktop Entry]
 Type=Application
 Name=Katzensprung
-Comment=Dateien direkt mit Freunden teilen
+Comment=Share files directly with friends
 Exec="%s" %%U
 Icon=katzensprung
 Terminal=false

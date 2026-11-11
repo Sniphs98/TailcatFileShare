@@ -55,7 +55,7 @@ func main() {
 			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{
 				Title:   "Katzensprung",
-				Message: "Dateien direkt und Ende-zu-Ende verschlüsselt teilen – über tailcat.",
+				Message: "Share files directly and end-to-end encrypted, powered by tailcat.",
 				Icon:    icon,
 			},
 			OnUrlOpen: app.handleURL,

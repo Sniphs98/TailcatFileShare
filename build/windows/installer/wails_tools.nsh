@@ -263,7 +263,7 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 !macro wails.associateCustomProtocols
     ; Create custom protocols associations
     
-      !insertmacro CUSTOM_PROTOCOL_ASSOCIATE "katzensprung" "Katzensprung-Freigabelink" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+      !insertmacro CUSTOM_PROTOCOL_ASSOCIATE "katzensprung" "Katzensprung share link" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
 
     
 !macroend
