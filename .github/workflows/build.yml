@@ -32,7 +32,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: sudo apt-get update && sudo apt-get install -y nsis
+      # The wails3 CLI itself links against GTK on Linux.
+      - run: sudo apt-get update && sudo apt-get install -y nsis libgtk-4-dev libwebkitgtk-6.0-dev
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
       - run: wails3 task windows:package ARCH=amd64 INSTALL_SCOPE=user
       - uses: actions/upload-artifact@v4
