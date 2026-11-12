@@ -135,8 +135,10 @@ function buildShare(el, s) {
       </div>
     </div>${body}`;
   el.querySelector('[data-act=copy]')?.addEventListener('click', guard(async (ev) => {
-    await CopyText(s.link);
+    // currentTarget is only set while the event is dispatched, so read it
+    // before awaiting.
     const b = ev.currentTarget;
+    await CopyText(s.link);
     b.classList.add('copied');
     b.querySelector('span').textContent = 'Copied!';
     setTimeout(() => { b.classList.remove('copied'); b.querySelector('span').textContent = 'Copy link'; }, 1600);
