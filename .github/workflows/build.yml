@@ -193,6 +193,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: catjump-*
       - name: Collect release files
         run: |
           mkdir dist
