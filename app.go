@@ -86,6 +86,7 @@ type State struct {
 	Transfers []TransferView `json:"transfers"`
 	Settings  Settings       `json:"settings"`
 	Platform  string         `json:"platform"`
+	Version   string         `json:"version"`
 }
 
 // ---- transfer bookkeeping (shared by sender and receiver) ----
@@ -192,7 +193,7 @@ func (a *App) changed() { a.dirty.Store(true) }
 func (a *App) GetState() State {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	st := State{Settings: a.settings, Platform: goruntime.GOOS}
+	st := State{Settings: a.settings, Platform: goruntime.GOOS, Version: appVersion}
 	for _, s := range a.shares {
 		st.Shares = append(st.Shares, s.view())
 	}

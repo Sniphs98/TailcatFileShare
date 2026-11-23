@@ -5,17 +5,36 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Publish a release with this version, e.g. v0.2.0 (leave empty to only build)"
-        required: false
-        default: ""
+      release:
+        description: "Release: the version counts up from the last tag (patch 0.2.3 → 0.2.4, minor → 0.3.0, major → 1.0.0)"
+        type: choice
+        options: [patch, minor, major, none]
+        default: patch
+
+concurrency:
+  group: build-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
 
 env:
   WAILS_VERSION: v3.1.0
-  # A release is made by "Run workflow" with a version, or by pushing a v* tag.
-  VERSION: ${{ (github.event_name == 'workflow_dispatch' && inputs.version) || (github.ref_type == 'tag' && github.ref_name) || github.sha }}
 
 jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      number: ${{ steps.v.outputs.number }}
+      release: ${{ steps.v.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # all tags
+      - id: v
+        run: .github/scripts/version.sh
+        env:
+          BUMP: ${{ github.event_name == 'workflow_dispatch' && inputs.release || 'none' }}
+          FIRST: v0.2.0
+
   test:
     runs-on: ubuntu-24.04
     steps:
@@ -29,7 +48,7 @@ jobs:
 
   # Windows is cross-compiled from Linux (no CGO needed) and packaged with NSIS.
   windows:
-    needs: test
+    needs: [test, version]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +61,18 @@ jobs:
       # The wails3 CLI itself links against GTK on Linux.
       - run: sudo apt-get update && sudo apt-get install -y nsis libgtk-4-dev libwebkitgtk-6.0-dev
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          NUMBER: ${{ needs.version.outputs.number }}
+          RELEASE: ${{ needs.version.outputs.release }}
+        run: |
+          echo "$VERSION" > version.txt
+          if [ "$RELEASE" = true ]; then
+            # Installer, Info.plist and .exe details carry the release number.
+            sed -i.bak -E "s/^(  version: )\".*\"/\1\"$NUMBER\"/" build/config.yml && rm build/config.yml.bak
+            wails3 task common:update:build-assets
+          fi
       - run: wails3 task windows:package ARCH=amd64 INSTALL_SCOPE=user
       - uses: actions/upload-artifact@v4
         with:
@@ -51,7 +82,7 @@ jobs:
             bin/catjump-amd64-installer.exe
 
   macos:
-    needs: test
+    needs: [test, version]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +93,18 @@ jobs:
         with:
           node-version: 22
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          NUMBER: ${{ needs.version.outputs.number }}
+          RELEASE: ${{ needs.version.outputs.release }}
+        run: |
+          echo "$VERSION" > version.txt
+          if [ "$RELEASE" = true ]; then
+            # Installer, Info.plist and .exe details carry the release number.
+            sed -i.bak -E "s/^(  version: )\".*\"/\1\"$NUMBER\"/" build/config.yml && rm build/config.yml.bak
+            wails3 task common:update:build-assets
+          fi
       - run: wails3 task darwin:package:universal
       - run: cd bin && ditto -c -k --keepParent catjump.app CatJump-macOS.zip
       - uses: actions/upload-artifact@v4
@@ -70,7 +113,7 @@ jobs:
           path: bin/CatJump-macOS.zip
 
   linux:
-    needs: test
+    needs: [test, version]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -82,6 +125,18 @@ jobs:
           node-version: 22
       - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          NUMBER: ${{ needs.version.outputs.number }}
+          RELEASE: ${{ needs.version.outputs.release }}
+        run: |
+          echo "$VERSION" > version.txt
+          if [ "$RELEASE" = true ]; then
+            # Installer, Info.plist and .exe details carry the release number.
+            sed -i.bak -E "s/^(  version: )\".*\"/\1\"$NUMBER\"/" build/config.yml && rm build/config.yml.bak
+            wails3 task common:update:build-assets
+          fi
       - run: wails3 build
       - uses: actions/upload-artifact@v4
         with:
@@ -90,11 +145,13 @@ jobs:
 
   # Collect everything into a GitHub release.
   release:
-    if: (github.event_name == 'workflow_dispatch' && inputs.version != '') || (github.ref_type == 'tag' && startsWith(github.ref_name, 'v'))
-    needs: [windows, macos, linux]
+    if: needs.version.outputs.release == 'true'
+    needs: [version, windows, macos, linux]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -126,10 +183,10 @@ jobs:
           (on macOS 15 and later: *System Settings → Privacy & Security → Open Anyway*).
           EOF
           if gh release view "$VERSION" >/dev/null 2>&1; then
-            # Release drafted on GitHub (with its tag): attach the files.
+            # Release already published on GitHub for a pushed tag: attach the files.
             gh release upload "$VERSION" dist/* --clobber
           else
-            # Creates the tag on this commit too.
+            # Also creates the tag on this commit.
             gh release create "$VERSION" dist/* --target "$GITHUB_SHA" --title "CatJump $VERSION" --notes-file notes.md --generate-notes
           fi
 

@@ -285,6 +285,7 @@ const transferList = {
 function render(st) {
   state = st;
   document.body.classList.add(`platform-${st.platform}`);
+  $('#app-version').textContent = st.version;
   set(document, '#dl-dir-path', st.settings.downloadDir || '');
 
   reconcile($('#shares'), st.shares, {

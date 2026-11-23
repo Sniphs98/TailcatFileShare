@@ -98,10 +98,12 @@ CatJump again to bring the window back.
 
 ### Releasing a new version
 
-On GitHub: **Actions → build → Run workflow**, enter a version such as
-`v0.3.0` and run it. The workflow builds all platforms and publishes the
-release with the downloads. Pushing a `v*` tag, or publishing a release with
-a new tag on the Releases page, does the same.
+On GitHub: **Actions → build → Run workflow** (on `main`). The version counts
+up from the newest `vX.Y.Z` tag on its own: **patch** (the default) turns
+v0.2.3 into v0.2.4, **minor** into v0.3.0, **major** into v1.0.0; the first
+release is v0.2.0. The workflow builds all platforms, stamps the version into
+the app and installer, tags the commit and publishes the release with the
+downloads. Pushing a `vX.Y.Z` tag yourself releases exactly that version.
 
 ### Link registration
 
