@@ -20,6 +20,7 @@ env:
 
 jobs:
   version:
+    timeout-minutes: 30
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.v.outputs.version }}
@@ -36,18 +37,30 @@ jobs:
           FIRST: v0.2.0
 
   test:
+    timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: Install system packages
+        timeout-minutes: 15
+        run: |
+          # A stuck Ubuntu mirror can hang apt for hours; give up after a few
+          # minutes and try again instead.
+          for i in 1 2 3; do
+            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update &&
+              timeout 300 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y libgtk-4-dev libwebkitgtk-6.0-dev && exit 0
+            echo "apt attempt $i failed, retrying"; sleep 15
+          done
+          exit 1
       - run: mkdir -p frontend/dist && touch frontend/dist/.keep
       - run: go test ./...
 
   # Windows is cross-compiled from Linux (no CGO needed) and packaged with NSIS.
   windows:
+    timeout-minutes: 30
     needs: [test, version]
     runs-on: ubuntu-24.04
     steps:
@@ -59,7 +72,17 @@ jobs:
         with:
           node-version: 22
       # The wails3 CLI itself links against GTK on Linux.
-      - run: sudo apt-get update && sudo apt-get install -y nsis libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: Install system packages
+        timeout-minutes: 15
+        run: |
+          # A stuck Ubuntu mirror can hang apt for hours; give up after a few
+          # minutes and try again instead.
+          for i in 1 2 3; do
+            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update &&
+              timeout 300 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y nsis libgtk-4-dev libwebkitgtk-6.0-dev && exit 0
+            echo "apt attempt $i failed, retrying"; sleep 15
+          done
+          exit 1
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
       - name: Stamp version
         env:
@@ -82,6 +105,7 @@ jobs:
             bin/catjump-amd64-installer.exe
 
   macos:
+    timeout-minutes: 30
     needs: [test, version]
     runs-on: macos-latest
     steps:
@@ -113,6 +137,7 @@ jobs:
           path: bin/CatJump-macOS.zip
 
   linux:
+    timeout-minutes: 30
     needs: [test, version]
     runs-on: ubuntu-24.04
     steps:
@@ -123,7 +148,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: Install system packages
+        timeout-minutes: 15
+        run: |
+          # A stuck Ubuntu mirror can hang apt for hours; give up after a few
+          # minutes and try again instead.
+          for i in 1 2 3; do
+            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update &&
+              timeout 300 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y libgtk-4-dev libwebkitgtk-6.0-dev && exit 0
+            echo "apt attempt $i failed, retrying"; sleep 15
+          done
+          exit 1
       - run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
       - name: Stamp version
         env:
@@ -145,6 +180,7 @@ jobs:
 
   # Collect everything into a GitHub release.
   release:
+    timeout-minutes: 30
     if: needs.version.outputs.release == 'true'
     needs: [version, windows, macos, linux]
     runs-on: ubuntu-24.04
