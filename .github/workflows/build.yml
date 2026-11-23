@@ -4,9 +4,16 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Publish a release with this version, e.g. v0.2.0 (leave empty to only build)"
+        required: false
+        default: ""
 
 env:
   WAILS_VERSION: v3.1.0
+  # A release is made by "Run workflow" with a version, or by pushing a v* tag.
+  VERSION: ${{ (github.event_name == 'workflow_dispatch' && inputs.version) || (github.ref_type == 'tag' && github.ref_name) || github.sha }}
 
 jobs:
   test:
@@ -80,3 +87,49 @@ jobs:
         with:
           name: catjump-Linux
           path: bin/catjump
+
+  # Collect everything into a GitHub release.
+  release:
+    if: (github.event_name == 'workflow_dispatch' && inputs.version != '') || (github.ref_type == 'tag' && startsWith(github.ref_name, 'v'))
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Collect release files
+        run: |
+          mkdir dist
+          a=artifacts
+          cp "$a/catjump-Windows/catjump-amd64-installer.exe" dist/CatJump-Setup-windows-x64.exe
+          cp "$a/catjump-Windows/catjump.exe"                 dist/CatJump-portable-windows-x64.exe
+          cp "$a/catjump-macOS/CatJump-macOS.zip"             dist/CatJump-macOS.zip
+          cp "$a/catjump-Linux/catjump"                       dist/CatJump-linux-x64
+          chmod +x dist/CatJump-linux-x64
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          ls -la dist
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<EOF
+          ## Downloads
+
+          - Windows: \`CatJump-Setup-windows-x64.exe\` (installer, recommended) or \`CatJump-portable-windows-x64.exe\`
+          - macOS: \`CatJump-macOS.zip\` (Intel and Apple Silicon)
+          - Linux: \`CatJump-linux-x64\` (needs GTK 4 and WebKitGTK 6.0)
+
+          The apps aren't code-signed. Windows: *More info → Run anyway*. macOS: right-click the app → *Open*
+          (on macOS 15 and later: *System Settings → Privacy & Security → Open Anyway*).
+          EOF
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            # Release drafted on GitHub (with its tag): attach the files.
+            gh release upload "$VERSION" dist/* --clobber
+          else
+            # Creates the tag on this commit too.
+            gh release create "$VERSION" dist/* --target "$GITHUB_SHA" --title "CatJump $VERSION" --notes-file notes.md --generate-notes
+          fi
+

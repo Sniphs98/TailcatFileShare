@@ -79,22 +79,29 @@ Note that tailcat describes itself as experimental; see its
 
 ## Download
 
-Builds for every platform come from the GitHub Actions workflow in
-[`.github/workflows/build.yml`](.github/workflows/build.yml):
+Everything is on the **[Releases page](../../releases/latest)**:
 
-| Platform | Artifact |
-|----------|----------|
-| Windows  | `catjump-amd64-installer.exe` (installer) or `catjump.exe` (portable) |
-| macOS    | `CatJump-macOS.zip` (universal `.app`) |
-| Linux    | `catjump` (needs GTK 4 and WebKitGTK 6.0) |
+| Platform | File |
+|----------|------|
+| Windows  | `CatJump-Setup-windows-x64.exe` (installer) or `CatJump-portable-windows-x64.exe` |
+| macOS    | `CatJump-macOS.zip` (Intel and Apple Silicon) |
+| Linux    | `CatJump-linux-x64` (needs GTK 4 and WebKitGTK 6.0) |
 
 The builds aren't code-signed. On Windows, SmartScreen shows a warning;
 click *More info → Run anyway*. On macOS, right-click the app and choose
-*Open* the first time.
+*Open* the first time (on macOS 15 and later: *System Settings → Privacy &
+Security → Open Anyway*).
 
 On Linux, the tray icon needs a desktop with StatusNotifier support (KDE,
 Cinnamon, XFCE; on GNOME the *AppIndicator* extension). Without it, launch
 CatJump again to bring the window back.
+
+### Releasing a new version
+
+On GitHub: **Actions → build → Run workflow**, enter a version such as
+`v0.3.0` and run it. The workflow builds all platforms and publishes the
+release with the downloads. Pushing a `v*` tag, or publishing a release with
+a new tag on the Releases page, does the same.
 
 ### Link registration
 
